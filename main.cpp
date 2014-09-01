@@ -163,12 +163,21 @@ int main(int argc, char* argv[])
     }
 
 
+    RGBTRIPLE white;
+    white.rgbtGreen = 255;
+    white.rgbtRed   = 255;
+    white.rgbtBlue  = 255;
+
     // building the output file:
     for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight-q; i++)
+    {
+        // iterate over pixels in scanline
+        for (int j = 0; j < bi1.biWidth; j++)
         {
-            // iterate over pixels in scanline
-            for (int j = 0; j < bi1.biWidth; j++)
-            {
+
+        }
+
+    }
 
     // then add it to outfile
     for (int k = 0; k <out_padding; k++)
