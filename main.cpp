@@ -88,9 +88,11 @@ int main(int argc, char* argv[])
     out_bf = bf1;
     out_bi = bi1;
 
+    int white_border = 2;
+
     // update the header file.
-    out_bi.biWidth = bi.biWidth + 100;
-    out_bi.biHeight = bi.biHeight + 100;
+    out_bi.biWidth = bi1.biWidth + 2 * white_border;
+    out_bi.biHeight = bi1.biHeight + 2 * white_border;
 
     // determine padding for scanlines
     int in_padding =  (4 - (bi1.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
@@ -108,7 +110,7 @@ int main(int argc, char* argv[])
     // writing to a 3D array
     RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // orgineel
     RGBTRIPLE image2[bi2.biHeight][bi2.biWidth]; // te machten plaat
-    RGBTRIPLE image3[bi1.biHeight+100][bi1.biWidth+100]; // output file.
+//    RGBTRIPLE image3[bi1.biHeight + 2 * white_border][bi1.biWidth + 2 * white_border]; // output file.
 
     for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight; i++)
     {
@@ -130,7 +132,7 @@ int main(int argc, char* argv[])
     fclose(inptr2);
 
     // now making the comparison between the input files
-
+/*
     // location
     int x_loc, y_loc;
 
@@ -161,7 +163,7 @@ int main(int argc, char* argv[])
 
         error_count = 0;
     }
-
+*/
 
     RGBTRIPLE white;
     white.rgbtGreen = 255;
@@ -169,19 +171,51 @@ int main(int argc, char* argv[])
     white.rgbtBlue  = 255;
 
     // building the output file:
-    for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight-q; i++)
+    for (int i = 0, biHeight = abs(out_bi.biHeight); i < biHeight; i++)
     {
-        // iterate over pixels in scanline
-        for (int j = 0; j < bi1.biWidth; j++)
+        // make the first 50 koloms white
+        if ( i < white_border || i > white_border + bi2.biHeight)
         {
+            for (int j = 0; j < out_bi.biWidth; j++)
+            {
+                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+                printf("\tG: 0, R: 0, B: 0");
+            }
+        }
+        else
+        {
+            // write the white space left.
+            for (int j = 0; j < white_border; j++)
+            {
+                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+                printf("\tG: 0, R: 0, B: 0");
+            }
+
+
+            // write the image to outfile
+            for (int j = 0; j < bi2.biWidth; j++)
+            {
+                fwrite(&image1[i][j], sizeof(RGBTRIPLE), 1, outptr);
+                printf("\tG: %d, R: %d, B: %d",image1[i][j].rgbtGreen, image1[i][j].rgbtRed, image1[i][j].rgbtBlue);
+            }
+
+            // write the white space right.
+            for (int j = 0; j < white_border; j++)
+            {
+                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+                printf("\tG: 0, R: 0, B: 0");
+            }
 
         }
 
+        // then add it to outfile
+        for (int k = 0; k <out_padding; k++)
+            fputc(0x00, outptr);
+
+        printf("\n");
+
     }
 
-    // then add it to outfile
-    for (int k = 0; k <out_padding; k++)
-        fputc(0x00, outptr);
 
 
 
