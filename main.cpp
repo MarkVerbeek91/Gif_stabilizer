@@ -170,16 +170,18 @@ int main(int argc, char* argv[])
     white.rgbtRed   = 255;
     white.rgbtBlue  = 255;
 
+    int input_col_num = 0;
+
     // building the output file:
     for (int i = 0, biHeight = abs(out_bi.biHeight); i < biHeight; i++)
     {
         // make the first 50 koloms white
-        if ( i < white_border || i > white_border + bi2.biHeight)
+        if ( i < white_border || i >= white_border + bi2.biHeight)
         {
             for (int j = 0; j < out_bi.biWidth; j++)
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-                printf("\tG: 0, R: 0, B: 0");
+          //      printf("\tG: 255, R: 255, B: 255");
             }
         }
         else
@@ -188,23 +190,24 @@ int main(int argc, char* argv[])
             for (int j = 0; j < white_border; j++)
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-                printf("\tG: 0, R: 0, B: 0");
+          //      printf("\tG: 255, R: 255, B: 255");
             }
 
 
             // write the image to outfile
             for (int j = 0; j < bi2.biWidth; j++)
             {
-                fwrite(&image1[i][j], sizeof(RGBTRIPLE), 1, outptr);
-                printf("\tG: %d, R: %d, B: %d",image1[i][j].rgbtGreen, image1[i][j].rgbtRed, image1[i][j].rgbtBlue);
+                fwrite(&image1[input_col_num][j], sizeof(RGBTRIPLE), 1, outptr);
+          //      printf("\tG: %d, R: %d, B: %d",image1[input_col_num][j].rgbtGreen, image1[input_col_num][j].rgbtRed, image1[input_col_num][j].rgbtBlue);
             }
 
             // write the white space right.
             for (int j = 0; j < white_border; j++)
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-                printf("\tG: 0, R: 0, B: 0");
+           //     printf("\tG: 255, R: 255, B: 255");
             }
+            input_col_num++;
 
         }
 
@@ -212,7 +215,7 @@ int main(int argc, char* argv[])
         for (int k = 0; k <out_padding; k++)
             fputc(0x00, outptr);
 
-        printf("\n");
+    //    printf("\n");
 
     }
 
