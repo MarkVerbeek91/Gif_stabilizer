@@ -132,12 +132,13 @@ int main(int argc, char* argv[])
     fclose(inptr2);
 
     // now making the comparison between the input files
-/*
+
     // location
     int x_loc, y_loc;
 
     int error_count = 0, min_error = -1;
 
+    // find the off sect in y-cords. because I know the input.
     for ( int q = 0; q < 10; q++) // find location in height
     {
         for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight-q; i++)
@@ -145,7 +146,7 @@ int main(int argc, char* argv[])
             // iterate over pixels in scanline
             for (int j = 0; j < bi1.biWidth; j++)
             {
-                printf("\t%d: \t%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
+                printf("\tA:%d, \tB:%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
 
                 if (image1[i][j].rgbtGreen != image2[i+q][j].rgbtGreen)
                     error_count++;
@@ -157,13 +158,15 @@ int main(int argc, char* argv[])
 
         if (error_count == 0)
         {
-            x_loc = q;
+            y_loc = q;
             break;
         }
 
         error_count = 0;
     }
-*/
+
+    printf("offset in y: %d", y_loc);
+
 
     RGBTRIPLE white;
     white.rgbtGreen = 255;

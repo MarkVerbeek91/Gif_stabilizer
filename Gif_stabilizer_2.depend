@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1409578595 source:c:\users\mark\documents\development\gif_stabilizer_2\main.cpp
+1409653172 source:c:\users\mark\documents\development\gif_stabilizer_2\main.cpp
 	<stdio.h>
 	<stdlib.h>
 	"bmp.hpp"
