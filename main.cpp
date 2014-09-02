@@ -3,6 +3,7 @@
 
 #include "bmp.hpp"
 
+
 int main(int argc, char* argv[])
 {
     // ensure proper usage
@@ -88,7 +89,7 @@ int main(int argc, char* argv[])
     out_bf = bf1;
     out_bi = bi1;
 
-    int white_border = 2;
+    int white_border = 5;
 
     // update the header file.
     out_bi.biWidth = bi1.biWidth + 2 * white_border;
@@ -173,13 +174,26 @@ int main(int argc, char* argv[])
     white.rgbtRed   = 255;
     white.rgbtBlue  = 255;
 
+    RGBTRIPLE black;
+    black.rgbtGreen = 0;
+    black.rgbtRed   = 0;
+    black.rgbtBlue  = 0;
+
     int input_col_num = 0;
 
     // building the output file:
     for (int i = 0, biHeight = abs(out_bi.biHeight); i < biHeight; i++)
     {
         // make the first 50 koloms white
-        if ( i < white_border || i >= white_border + bi2.biHeight)
+        if ( i < white_border + y_loc )
+        {
+            for (int j = 0; j < out_bi.biWidth; j++)
+            {
+                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+          //      printf("\tG: 255, R: 255, B: 255");
+            }
+        }
+        else if (i >= (white_border + bi2.biHeight + y_loc))
         {
             for (int j = 0; j < out_bi.biWidth; j++)
             {
