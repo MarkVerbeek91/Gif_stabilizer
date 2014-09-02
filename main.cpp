@@ -83,30 +83,9 @@ int main(int argc, char* argv[])
         return 4;
     }
 
-    // construct bitmap headers for the outfile
-    BITMAPFILEHEADER out_bf;
-    BITMAPINFOHEADER out_bi;
-    out_bf = bf1;
-    out_bi = bi1;
-
-    int white_border = 5;
-
-    // update the header file.
-    out_bi.biWidth = bi1.biWidth + 2 * white_border;
-    out_bi.biHeight = bi1.biHeight + 2 * white_border;
-
     // determine padding for scanlines
     int in_padding =  (4 - (bi1.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
-    int out_padding =  (4 - (out_bi.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
 
-    out_bf.bfSize = 54 + out_bi.biWidth * abs(out_bi.biHeight) * 3 + abs(out_bi.biHeight) *  out_padding;
-    out_bi.biSizeImage = ((((out_bi.biWidth * out_bi.biBitCount) + 31) & ~31) / 8) * abs(out_bi.biHeight);
-
-    // write outfile's BITMAPFILEHEADER
-    fwrite(&out_bf, sizeof(BITMAPFILEHEADER)-2, 1, outptr);
-
-    // write outfile's BITMAPINFOHEADER
-    fwrite(&out_bi, sizeof(BITMAPINFOHEADER), 1, outptr);
 
     // writing to a 3D array
     RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // orgineel
@@ -132,41 +111,86 @@ int main(int argc, char* argv[])
     fclose(inptr1);
     fclose(inptr2);
 
-    // now making the comparison between the input files
+    /** The next section makes a comparison between the input files. Several
+        overlaps of the first input file over the second input file are tried.
+        The best one is saved.
+    */
 
-    // location
     int x_loc, y_loc;
-
     int error_count = 0, min_error = -1;
 
-    // find the off sect in y-cords. because I know the input.
-    for ( int q = 0; q < 10; q++) // find location in height
+
+    for ( int x = 0; x < 10; x++)
     {
-        for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight-q; i++)
+       // find the off sect in y-cords. because I know the input.
+        for ( int y = 0; y < 10; y++)
         {
-            // iterate over pixels in scanline
-            for (int j = 0; j < bi1.biWidth; j++)
+            for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight-y; i++)
             {
-                printf("\t  %d::%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
+                // iterate over pixels in scanline
+                for (int j = 0; j < bi1.biWidth-x; j++)
+                {
+                    if (image1[i][j].rgbtGreen != image2[i+y][j+x].rgbtGreen)
+                        error_count++;
 
-                if (image1[i][j].rgbtGreen != image2[i+q][j].rgbtGreen)
-                    error_count++;
+                //  printf("\t  %d::%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
 
+                }
+         // printf("\n");
             }
-            printf("\n");
-        }
-        printf("error between file: %d\n", error_count);
+            printf("error between file: %d\n", error_count);
 
-        if (error_count == 0)
-        {
-            y_loc = q;
-            break;
-        }
+            if (error_count == 0)
+            {
+                y_loc = y;
+                x_loc = x;
+                break;
+            }
 
-        error_count = 0;
+            error_count = 0;
+        }
     }
 
+
     printf("offset in y: %d", y_loc);
+
+    /** This section build makes the header for the output file.
+
+    */
+
+    // construct bitmap headers for the outfile
+    BITMAPFILEHEADER out_bf;
+    BITMAPINFOHEADER out_bi;
+    out_bf = bf1;
+    out_bi = bi1;
+
+    int white_border = 5;
+
+    // update the header file.
+    out_bi.biWidth = bi1.biWidth + 2 * white_border;
+    out_bi.biHeight = bi1.biHeight + 2 * white_border;
+
+    // determine padding for scanlines
+    int out_padding =  (4 - (out_bi.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
+
+    out_bf.bfSize = 54 + out_bi.biWidth * abs(out_bi.biHeight) * 3 + abs(out_bi.biHeight) *  out_padding;
+    out_bi.biSizeImage = ((((out_bi.biWidth * out_bi.biBitCount) + 31) & ~31) / 8) * abs(out_bi.biHeight);
+
+    // write outfile's BITMAPFILEHEADER
+    fwrite(&out_bf, sizeof(BITMAPFILEHEADER)-2, 1, outptr);
+
+    // write outfile's BITMAPINFOHEADER
+    fwrite(&out_bi, sizeof(BITMAPINFOHEADER), 1, outptr);
+
+
+    /** The next section writes input file 1 to output file. For this a white
+        or black pixel is needed. After that the code loops through the rows
+        of the output file and add according to the row number blank pixels or
+        the image.
+            Left and right of the image are also black pixels placed.
+
+    */
+
 
 
     RGBTRIPLE white;
@@ -181,16 +205,14 @@ int main(int argc, char* argv[])
 
     int input_col_num = 0;
 
-    // building the output file:
     for (int i = 0, biHeight = abs(out_bi.biHeight); i < biHeight; i++)
     {
-        // make the first 50 koloms white
+        // make the first coloms white
         if ( i < white_border + y_loc )
         {
             for (int j = 0; j < out_bi.biWidth; j++)
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-          //      printf("\tG: 255, R: 255, B: 255");
             }
         }
         else if (i >= (white_border + bi2.biHeight + y_loc))
@@ -198,31 +220,25 @@ int main(int argc, char* argv[])
             for (int j = 0; j < out_bi.biWidth; j++)
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-          //      printf("\tG: 255, R: 255, B: 255");
             }
         }
         else
         {
-            // write the white space left.
             for (int j = 0; j < white_border; j++)
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-          //      printf("\tG: 255, R: 255, B: 255");
             }
-
 
             // write the image to outfile
             for (int j = 0; j < bi2.biWidth; j++)
             {
                 fwrite(&image1[input_col_num][j], sizeof(RGBTRIPLE), 1, outptr);
-          //      printf("\tG: %d, R: %d, B: %d",image1[input_col_num][j].rgbtGreen, image1[input_col_num][j].rgbtRed, image1[input_col_num][j].rgbtBlue);
             }
 
             // write the white space right.
             for (int j = 0; j < white_border; j++)
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-           //     printf("\tG: 255, R: 255, B: 255");
             }
             input_col_num++;
 
@@ -232,14 +248,7 @@ int main(int argc, char* argv[])
         for (int k = 0; k <out_padding; k++)
             fputc(0x00, outptr);
 
-    //    printf("\n");
-
     }
-
-
-
-
-
     // close outfile
     fclose(outptr);
 
