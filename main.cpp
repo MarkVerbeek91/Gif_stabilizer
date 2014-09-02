@@ -113,12 +113,12 @@ int main(int argc, char* argv[])
 
     /** The next section makes a comparison between the input files. Several
         overlaps of the first input file over the second input file are tried.
-        The best one is saved.
+        First part checks of the first frame has overlap on the up and left
+        corners. The second part checks the lower and right part.
     */
 
     int x_loc, y_loc;
     int error_count = 0, min_error = -1;
-
 
     for ( int x = 0; x < 10; x++)
     {
@@ -151,6 +151,36 @@ int main(int argc, char* argv[])
         }
     }
 
+    for ( int x = -9; x < 0; x++)
+    {
+       // find the off sect in y-cords. because I know the input.
+        for ( int y = -9; y < 0; y++)
+        {
+            for (int i = y, biHeight = abs(bi1.biHeight); i < biHeight; i++)
+            {
+                // iterate over pixels in scanline
+                for (int j = x; j < bi1.biWidth; j++)
+                {
+                    if (image1[i][j].rgbtGreen != image2[i][j].rgbtGreen)
+                        error_count++;
+
+                //  printf("\t  %d::%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
+
+                }
+         // printf("\n");
+            }
+            printf("error between file: %d\n", error_count);
+
+            if (error_count == 0)
+            {
+                y_loc = y;
+                x_loc = x;
+                break;
+            }
+
+            error_count = 0;
+        }
+    }
 
     printf("offset in y: %d", y_loc);
 
