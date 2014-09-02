@@ -113,10 +113,10 @@ int main(int argc, char* argv[])
     RGBTRIPLE image2[bi2.biHeight][bi2.biWidth]; // te machten plaat
 //    RGBTRIPLE image3[bi1.biHeight + 2 * white_border][bi1.biWidth + 2 * white_border]; // output file.
 
-    for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight; i++)
+    for (int i = abs(bi1.biHeight)-1; i >= 0; i--)
     {
         // iterate over pixels in scanline
-        for (int j = 0; j < bi1.biWidth; j++)
+        for (int j = bi1.biWidth-1; j >= 0; j--)
         {
             // read RGB triple from infile
             fread(&image1[i][j], sizeof(RGBTRIPLE), 1, inptr1);
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
             // iterate over pixels in scanline
             for (int j = 0; j < bi1.biWidth; j++)
             {
-                printf("\tA:%d, \tB:%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
+                printf("\t  %d::%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
 
                 if (image1[i][j].rgbtGreen != image2[i+q][j].rgbtGreen)
                     error_count++;
