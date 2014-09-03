@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     // ensure proper usage
     if (argc != 4)
     {
-        printf("Usage:resize infile1 infile2 outfile\n");
+        printf("Usage:resize object_file frame_file frame_out_file\n");
         return 1;
     }
 
@@ -53,9 +53,15 @@ int main(int argc, char* argv[])
     BITMAPINFOHEADER bi1;
     fread(&bi1, sizeof(BITMAPINFOHEADER), 1, inptr1);
 
+    printf("Bitmap file header:\n");
+    printf("Type: \t\t%d \nSize: \t\t%d \nReserved1: \t%d \nReserved2: \t%d \nOffBits: \t%d\n", bf1.bfType, bf1.bfSize, bf1.bfReserved1, bf1.bfReserved2, bf1.bfOffBits);
+
+    printf("Bitmap info header:\n");
+    printf("Size: \t\t%d\nWidth: \t\t%d\nHeight: \t%d\nPlanes: \t%d\nBitCount: \t%d\nCompression: \t%d\nSizeImage: \t%d\nXPlesPerMeter: \t%d\nYPelsPerMeter: \t%d\nClrUSed: \t%d\nClrImportant \t%d\n",bi1.biSize,bi1.biWidth,bi1.biHeight,bi1.biPlanes,bi1.biBitCount,bi1.biCompression,bi1.biSizeImage,bi1.biXPelsPerMeter,bi1.biYPelsPerMeter,bi1.biClrUsed,bi1.biClrImportant);
+
     // ensure infile is (likely) a 24-bit uncompressed BMP 4.0 //|| bf.bfOffBits != 54
     if (bf1.bfType != 0x4d42 || bi1.biSize != 40 ||
-            bi1.biBitCount != 24 || bi1.biCompression != 0)
+            bi1.biBitCount != 32 || bi1.biCompression != 0)
     {
         fclose(outptr);
         fclose(inptr1);
@@ -72,6 +78,14 @@ int main(int argc, char* argv[])
     BITMAPINFOHEADER bi2;
     fread(&bi2, sizeof(BITMAPINFOHEADER), 1, inptr2);
 
+
+    printf("Bitmap file header:\n");
+    printf("Type: \t\t%d \nSize: \t\t%d \nReserved2: \t%d \nReserved2: \t%d \nOffBits: \t%d\n", bf2.bfType, bf2.bfSize, bf2.bfReserved2, bf2.bfReserved2, bf2.bfOffBits);
+
+    printf("Bitmap info header:\n");
+    printf("Size: \t\t%d\nWidth: \t\t%d\nHeight: \t%d\nPlanes: \t%d\nBitCount: \t%d\nCompression: \t%d\nSizeImage: \t%d\nXPlesPerMeter: \t%d\nYPelsPerMeter: \t%d\nClrUSed: \t%d\nClrImportant \t%d\n",bi2.biSize,bi2.biWidth,bi2.biHeight,bi2.biPlanes,bi2.biBitCount,bi2.biCompression,bi2.biSizeImage,bi2.biXPelsPerMeter,bi2.biYPelsPerMeter,bi2.biClrUsed,bi2.biClrImportant);
+
+
     // ensure infile is (likely) a 24-bit uncompressed BMP 4.0 //|| bf.bfOffBits != 54
     if (bf2.bfType != 0x4d42 || bi2.biSize != 40 ||
             bi2.biBitCount != 24 || bi2.biCompression != 0)
@@ -82,6 +96,8 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Unsupported file format infile two.\n");
         return 4;
     }
+
+
 
     // determine padding for scanlines
     int in_padding =  (4 - (bi1.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
