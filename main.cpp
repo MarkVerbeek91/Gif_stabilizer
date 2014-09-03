@@ -104,8 +104,8 @@ int main(int argc, char* argv[])
 
 
     // writing to a 3D array
-    RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // orgineel
-    RGBTRIPLE image2[bi2.biHeight][bi2.biWidth]; // te machten plaat
+    RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // object image
+    RGBTRIPLE image2[bi2.biHeight][bi2.biWidth]; // objective image
 //    RGBTRIPLE image3[bi1.biHeight + 2 * white_border][bi1.biWidth + 2 * white_border]; // output file.
 
     for (int i = abs(bi1.biHeight)-1; i >= 0; i--)
@@ -136,17 +136,22 @@ int main(int argc, char* argv[])
     int x_loc, y_loc;
     int error_count = 0, min_error = -1;
 
-    for ( int x = 0; x < 10; x++)
+    int bi1Height = abs(bi1.biHeight);
+    int bi1Width = bi1.biWidth;
+    int max_x = abs(bi2.biHeight) - bi1Height;
+    int max_y = bi2.biWidth - bi1Width;
+
+    for ( int x = 0; x < max_x; x++)
     {
        // find the off sect in y-cords. because I know the input.
-        for ( int y = 0; y < 10; y++)
+        for ( int y = 0; y < max_y; y++)
         {
-            for (int i = 0, biHeight = abs(bi1.biHeight); i < biHeight-y; i++)
+            for (int i = 0; i < bi1Height; i++)
             {
                 // iterate over pixels in scanline
-                for (int j = 0; j < bi1.biWidth-x; j++)
+                for (int j = 0; j < bi1Width; j++)
                 {
-                    if (image1[i][j].rgbtGreen != image2[i+y][j+x].rgbtGreen)
+                    if (image1[i][j].rgbtGreen != image2[x+i][y+j].rgbtGreen)
                         error_count++;
 
                 //  printf("\t  %d::%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
