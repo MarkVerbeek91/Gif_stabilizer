@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 
     // read infile's BITMAPFILEHEADER
     BITMAPFILEHEADER bf1;
-    fread(&bf1, sizeof(BITMAPFILEHEADER)-2, 1, inptr1);
+    fread(&bf1, 14, 1, inptr1);
 
     // read infile's BITMAPINFOHEADER
     BITMAPINFOHEADER bi1;
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 
     // ensure infile is (likely) a 24-bit uncompressed BMP 4.0 //|| bf.bfOffBits != 54
     if (bf1.bfType != 0x4d42 || bi1.biSize != 40 ||
-            bi1.biBitCount != 32 || bi1.biCompression != 0)
+            bi1.biBitCount != 24 || bi1.biCompression != 0)
     {
         fclose(outptr);
         fclose(inptr1);
@@ -97,11 +97,9 @@ int main(int argc, char* argv[])
         return 4;
     }
 
-
-
     // determine padding for scanlines
-    int in_padding =  (4 - (bi1.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
-
+    int in_padding1 =  (4 - (bi1.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
+    int in_padding2 =  (4 - (bi2.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
 
     // writing to a 3D array
     RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // object image
@@ -115,17 +113,56 @@ int main(int argc, char* argv[])
         {
             // read RGB triple from infile
             fread(&image1[i][j], sizeof(RGBTRIPLE), 1, inptr1);
+
+        }
+
+        // skip over padding in infile
+        fseek(inptr1, in_padding1, SEEK_CUR);
+    }
+
+    for (int i = abs(bi2.biHeight)-1; i >= 0; i--)
+    {
+        // iterate over pixels in scanline
+        for (int j = bi2.biWidth-1; j >= 0; j--)
+        {
+            // read RGB triple from infile
             fread(&image2[i][j], sizeof(RGBTRIPLE), 1, inptr2);
         }
 
         // skip over padding in infile
-        fseek(inptr1, in_padding, SEEK_CUR);
-        fseek(inptr2, in_padding, SEEK_CUR);
+        fseek(inptr1, in_padding2, SEEK_CUR);
     }
 
     // close infile
     fclose(inptr1);
     fclose(inptr2);
+
+    printf("target file:\n");
+    for (int i = 0; i < abs(bi1.biHeight); i++)
+    {
+        for (int j = 0; j < bi1.biWidth; j++)
+        {
+            if (image1[i][j].rgbtGreen == 28)
+                printf("X");
+            else
+                printf(" ");
+        }
+        printf("\n");
+    }
+
+    printf("object file:\n");
+    for (int i = 0; i < abs(bi2.biHeight); i++)
+    {
+        for (int j = 0; j < bi2.biWidth; j++)
+        {
+            if (image2[i][j].rgbtGreen == 28)
+                printf("X");
+            else
+                printf(" ");
+        }
+        printf("\n");
+    }
+
 
     /** The next section makes a comparison between the input files. Several
         overlaps of the first input file over the second input file are tried.
