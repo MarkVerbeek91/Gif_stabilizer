@@ -101,21 +101,22 @@ int main(int argc, char* argv[])
     int in_padding1 =  (4 - (bi1.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
     int in_padding2 =  (4 - (bi2.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
 
+
     // writing to a 3D array
     RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // object image
     RGBTRIPLE image2[bi2.biHeight][bi2.biWidth]; // objective image
 //    RGBTRIPLE image3[bi1.biHeight + 2 * white_border][bi1.biWidth + 2 * white_border]; // output file.
 
     for (int i = abs(bi1.biHeight)-1; i >= 0; i--)
+  //  for (int i = 0; i < abs(bi1.biHeight); i++)
     {
         // iterate over pixels in scanline
-        for (int j = bi1.biWidth-1; j >= 0; j--)
+        for (int j = 0; j < bi1.biWidth; j++)
         {
             // read RGB triple from infile
             fread(&image1[i][j], sizeof(RGBTRIPLE), 1, inptr1);
 
         }
-
         // skip over padding in infile
         fseek(inptr1, in_padding1, SEEK_CUR);
     }
@@ -123,14 +124,14 @@ int main(int argc, char* argv[])
     for (int i = abs(bi2.biHeight)-1; i >= 0; i--)
     {
         // iterate over pixels in scanline
-        for (int j = bi2.biWidth-1; j >= 0; j--)
+        for (int j = 0; j < bi2.biWidth; j++)
         {
             // read RGB triple from infile
             fread(&image2[i][j], sizeof(RGBTRIPLE), 1, inptr2);
         }
 
         // skip over padding in infile
-        fseek(inptr1, in_padding2, SEEK_CUR);
+        fseek(inptr2, in_padding2, SEEK_CUR);
     }
 
     // close infile
@@ -142,7 +143,7 @@ int main(int argc, char* argv[])
     {
         for (int j = 0; j < bi1.biWidth; j++)
         {
-            if (image1[i][j].rgbtGreen == 28)
+            if (image1[i][j].rgbtRed == 255 & image1[i][j].rgbtGreen == 255 & image1[i][j].rgbtBlue == 255)
                 printf("X");
             else
                 printf(" ");
@@ -155,7 +156,7 @@ int main(int argc, char* argv[])
     {
         for (int j = 0; j < bi2.biWidth; j++)
         {
-            if (image2[i][j].rgbtGreen == 28)
+            if (image2[i][j].rgbtRed == 255 & image2[i][j].rgbtGreen == 255 & image2[i][j].rgbtBlue == 255)
                 printf("X");
             else
                 printf(" ");
@@ -189,14 +190,13 @@ int main(int argc, char* argv[])
                 for (int j = 0; j < bi1Width; j++)
                 {
                     if (image1[i][j].rgbtGreen != image2[x+i][y+j].rgbtGreen)
+                    {
                         error_count++;
 
-                //  printf("\t  %d::%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
-
+                    }
                 }
-         // printf("\n");
             }
-            printf("error between file: %d\n", error_count);
+   //         printf("%d, %d, error between file: %d\n", x,y, error_count);
 
             if (error_count == 0)
             {
@@ -209,38 +209,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    for ( int x = -9; x < 0; x++)
-    {
-       // find the off sect in y-cords. because I know the input.
-        for ( int y = -9; y < 0; y++)
-        {
-            for (int i = y, biHeight = abs(bi1.biHeight); i < biHeight; i++)
-            {
-                // iterate over pixels in scanline
-                for (int j = x; j < bi1.biWidth; j++)
-                {
-                    if (image1[i][j].rgbtGreen != image2[i][j].rgbtGreen)
-                        error_count++;
-
-                //  printf("\t  %d::%d, ",image1[i][j].rgbtGreen,image2[i+q][j].rgbtGreen);
-
-                }
-         // printf("\n");
-            }
-            printf("error between file: %d\n", error_count);
-
-            if (error_count == 0)
-            {
-                y_loc = y;
-                x_loc = x;
-                break;
-            }
-
-            error_count = 0;
-        }
-    }
-
-    printf("offset in y: %d", y_loc);
+    printf("offset in y: %d\n", y_loc);
+    printf("offset in x: %d", x_loc);
 
     /** This section build makes the header for the output file.
 
@@ -255,8 +225,8 @@ int main(int argc, char* argv[])
     int white_border = 5;
 
     // update the header file.
-    out_bi.biWidth = bi1.biWidth + 2 * white_border;
-    out_bi.biHeight = bi1.biHeight + 2 * white_border;
+    out_bi.biWidth = bi2.biWidth + 2 * white_border;
+    out_bi.biHeight = bi2.biHeight + 2 * white_border;
 
     // determine padding for scanlines
     int out_padding =  (4 - (out_bi.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
@@ -291,9 +261,9 @@ int main(int argc, char* argv[])
     black.rgbtRed   = 0;
     black.rgbtBlue  = 0;
 
-    int input_col_num = 0;
+    int input_col_num = bi2.biHeight -1;
 
-    for (int i = 0, biHeight = abs(out_bi.biHeight); i < biHeight; i++)
+    for (int i = abs(out_bi.biHeight)-1; i >= 0; i--)
     {
         // make the first coloms white
         if ( i < white_border + y_loc )
@@ -320,7 +290,7 @@ int main(int argc, char* argv[])
             // write the image to outfile
             for (int j = 0; j < bi2.biWidth; j++)
             {
-                fwrite(&image1[input_col_num][j], sizeof(RGBTRIPLE), 1, outptr);
+                fwrite(&image2[input_col_num][j], sizeof(RGBTRIPLE), 1, outptr);
             }
 
             // write the white space right.
@@ -328,7 +298,7 @@ int main(int argc, char* argv[])
             {
                 fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
             }
-            input_col_num++;
+            input_col_num--;
 
         }
 
@@ -336,6 +306,11 @@ int main(int argc, char* argv[])
         for (int k = 0; k <out_padding; k++)
             fputc(0x00, outptr);
 
+    }
+
+    for (int j = 0; j < 10000; j++)
+    {
+        fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
     }
     // close outfile
     fclose(outptr);
