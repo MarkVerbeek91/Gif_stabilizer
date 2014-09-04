@@ -20,6 +20,7 @@ int main(int argc, char* argv[])
 
     // open input file
     FILE* inptr1 = fopen(infile1, "r");
+    printf("inptr: %d\n", inptr1);
     if (inptr1 == NULL)
     {
         printf("Could not open %s.\n", infile1);
@@ -28,6 +29,7 @@ int main(int argc, char* argv[])
 
     // open input file
     FILE* inptr2 = fopen(infile2, "r");
+    printf("inptr: %d\n", inptr2);
     if (inptr2 == NULL)
     {
         fclose(inptr1);
@@ -47,10 +49,27 @@ int main(int argc, char* argv[])
 
     // read infile's BITMAPFILEHEADER
     BITMAPFILEHEADER bf1;
+    bf1.bfType = 0;
+    bf1.bfSize = 0;
+    bf1.bfReserved2 = 0;
+    bf1.bfReserved2 = 0;
+    bf1.bfOffBits = 5;
     fread(&bf1, 14, 1, inptr1);
 
     // read infile's BITMAPINFOHEADER
     BITMAPINFOHEADER bi1;
+    bi1.biSize = 0;
+    bi1.biWidth = 0;
+    bi1.biHeight = 0;
+    bi1.biPlanes = 0;
+    bi1.biBitCount = 0;
+    bi1.biCompression = 0;
+    bi1.biSizeImage = 0;
+    bi1.biXPelsPerMeter = 0;
+    bi1.biYPelsPerMeter = 0;
+    bi1.biClrUsed = 0;
+    bi1.biClrImportant = 0;
+
     fread(&bi1, sizeof(BITMAPINFOHEADER), 1, inptr1);
 
     printf("Bitmap file header:\n");
@@ -60,8 +79,7 @@ int main(int argc, char* argv[])
     printf("Size: \t\t%d\nWidth: \t\t%d\nHeight: \t%d\nPlanes: \t%d\nBitCount: \t%d\nCompression: \t%d\nSizeImage: \t%d\nXPlesPerMeter: \t%d\nYPelsPerMeter: \t%d\nClrUSed: \t%d\nClrImportant \t%d\n",bi1.biSize,bi1.biWidth,bi1.biHeight,bi1.biPlanes,bi1.biBitCount,bi1.biCompression,bi1.biSizeImage,bi1.biXPelsPerMeter,bi1.biYPelsPerMeter,bi1.biClrUsed,bi1.biClrImportant);
 
     // ensure infile is (likely) a 24-bit uncompressed BMP 4.0 //|| bf.bfOffBits != 54
-    if (bf1.bfType != 0x4d42 || bi1.biSize != 40 ||
-            bi1.biBitCount != 24 || bi1.biCompression != 0)
+    if (bf1.bfType != 0x4d42 || bi1.biSize != 40 || !(bi1.biBitCount == 24 || bi1.biBitCount == 32) || bi1.biCompression != 0)
     {
         fclose(outptr);
         fclose(inptr1);
@@ -70,12 +88,30 @@ int main(int argc, char* argv[])
         return 4;
     }
 
+    printf("inptr: %d\n", inptr2);
     // read infile's BITMAPFILEHEADER
     BITMAPFILEHEADER bf2;
-    fread(&bf2, sizeof(BITMAPFILEHEADER)-2, 1, inptr2);
+    bf2.bfType = 0;
+    bf2.bfSize = 0;
+    bf2.bfReserved2 = 0;
+    bf2.bfReserved2 = 0;
+    bf2.bfOffBits = 0;
+    fread(&bf2, 14, 1, inptr2);
 
     // read infile's BITMAPINFOHEADER
     BITMAPINFOHEADER bi2;
+    bi2.biSize = 3;
+    bi2.biWidth = 8;
+    bi2.biHeight = 0;
+    bi2.biPlanes = 0;
+    bi2.biBitCount = 0;
+    bi2.biCompression = 0;
+    bi2.biSizeImage = 0;
+    bi2.biXPelsPerMeter = 333;
+    bi2.biYPelsPerMeter = 0;
+    bi2.biClrUsed = 0;
+    bi2.biClrImportant = 0;
+
     fread(&bi2, sizeof(BITMAPINFOHEADER), 1, inptr2);
 
 
@@ -88,7 +124,7 @@ int main(int argc, char* argv[])
 
     // ensure infile is (likely) a 24-bit uncompressed BMP 4.0 //|| bf.bfOffBits != 54
     if (bf2.bfType != 0x4d42 || bi2.biSize != 40 ||
-            bi2.biBitCount != 24 || bi2.biCompression != 0)
+            !(bi2.biBitCount == 24 || bi2.biBitCount == 32) || bi2.biCompression != 0)
     {
         fclose(outptr);
         fclose(inptr1);
@@ -105,6 +141,7 @@ int main(int argc, char* argv[])
     // writing to a 3D array
     RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // object image
     RGBTRIPLE image2[bi2.biHeight][bi2.biWidth]; // objective image
+    RGBQUADRUPLE image3[bi2.biHeight][bi2.biWidth];
 //    RGBTRIPLE image3[bi1.biHeight + 2 * white_border][bi1.biWidth + 2 * white_border]; // output file.
 
     for (int i = abs(bi1.biHeight)-1; i >= 0; i--)
@@ -127,7 +164,10 @@ int main(int argc, char* argv[])
         for (int j = 0; j < bi2.biWidth; j++)
         {
             // read RGB triple from infile
-            fread(&image2[i][j], sizeof(RGBTRIPLE), 1, inptr2);
+            if (bi2.biBitCount == 24)
+                fread(&image2[i][j], sizeof(RGBTRIPLE), 1, inptr2);
+            else
+                fread(&image3[i][j], sizeof(RGBQUADRUPLE), 1, inptr2);
         }
 
         // skip over padding in infile
