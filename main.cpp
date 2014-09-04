@@ -49,15 +49,18 @@ int main(int argc, char* argv[])
 
     // read infile's BITMAPFILEHEADER
     BITMAPFILEHEADER bf1;
+    /*
     bf1.bfType = 0;
     bf1.bfSize = 0;
     bf1.bfReserved2 = 0;
     bf1.bfReserved2 = 0;
     bf1.bfOffBits = 5;
+    */
     fread(&bf1, 14, 1, inptr1);
 
     // read infile's BITMAPINFOHEADER
     BITMAPINFOHEADER bi1;
+    /*
     bi1.biSize = 0;
     bi1.biWidth = 0;
     bi1.biHeight = 0;
@@ -69,8 +72,8 @@ int main(int argc, char* argv[])
     bi1.biYPelsPerMeter = 0;
     bi1.biClrUsed = 0;
     bi1.biClrImportant = 0;
-
-    fread(&bi1, sizeof(BITMAPINFOHEADER), 1, inptr1);
+    */
+    fread(&bi1, 40, 1, inptr1);
 
     printf("Bitmap file header:\n");
     printf("Type: \t\t%d \nSize: \t\t%d \nReserved1: \t%d \nReserved2: \t%d \nOffBits: \t%d\n", bf1.bfType, bf1.bfSize, bf1.bfReserved1, bf1.bfReserved2, bf1.bfOffBits);
@@ -79,27 +82,29 @@ int main(int argc, char* argv[])
     printf("Size: \t\t%d\nWidth: \t\t%d\nHeight: \t%d\nPlanes: \t%d\nBitCount: \t%d\nCompression: \t%d\nSizeImage: \t%d\nXPlesPerMeter: \t%d\nYPelsPerMeter: \t%d\nClrUSed: \t%d\nClrImportant \t%d\n",bi1.biSize,bi1.biWidth,bi1.biHeight,bi1.biPlanes,bi1.biBitCount,bi1.biCompression,bi1.biSizeImage,bi1.biXPelsPerMeter,bi1.biYPelsPerMeter,bi1.biClrUsed,bi1.biClrImportant);
 
     // ensure infile is (likely) a 24-bit uncompressed BMP 4.0 //|| bf.bfOffBits != 54
-    if (bf1.bfType != 0x4d42 || bi1.biSize != 40 || !(bi1.biBitCount == 24 || bi1.biBitCount == 32) || bi1.biCompression != 0)
+    if (bf1.bfType != 0x4d42 || bi1.biSize != 56 || bi1.biBitCount != 32 || bi1.biCompression != 3)
     {
         fclose(outptr);
         fclose(inptr1);
         fclose(inptr2);
-        fprintf(stderr, "Unsupported file format infile one.\n");
+        fprintf(stderr, "Unsupported file format %s\n", infile1);
         return 4;
     }
 
-    printf("inptr: %d\n", inptr2);
     // read infile's BITMAPFILEHEADER
     BITMAPFILEHEADER bf2;
+    /*
     bf2.bfType = 0;
     bf2.bfSize = 0;
     bf2.bfReserved2 = 0;
     bf2.bfReserved2 = 0;
     bf2.bfOffBits = 0;
+    */
     fread(&bf2, 14, 1, inptr2);
 
     // read infile's BITMAPINFOHEADER
     BITMAPINFOHEADER bi2;
+    /*
     bi2.biSize = 3;
     bi2.biWidth = 8;
     bi2.biHeight = 0;
@@ -111,9 +116,8 @@ int main(int argc, char* argv[])
     bi2.biYPelsPerMeter = 0;
     bi2.biClrUsed = 0;
     bi2.biClrImportant = 0;
-
-    fread(&bi2, sizeof(BITMAPINFOHEADER), 1, inptr2);
-
+    */
+    fread(&bi2, 40, 1, inptr2);
 
     printf("Bitmap file header:\n");
     printf("Type: \t\t%d \nSize: \t\t%d \nReserved2: \t%d \nReserved2: \t%d \nOffBits: \t%d\n", bf2.bfType, bf2.bfSize, bf2.bfReserved2, bf2.bfReserved2, bf2.bfOffBits);
@@ -121,10 +125,8 @@ int main(int argc, char* argv[])
     printf("Bitmap info header:\n");
     printf("Size: \t\t%d\nWidth: \t\t%d\nHeight: \t%d\nPlanes: \t%d\nBitCount: \t%d\nCompression: \t%d\nSizeImage: \t%d\nXPlesPerMeter: \t%d\nYPelsPerMeter: \t%d\nClrUSed: \t%d\nClrImportant \t%d\n",bi2.biSize,bi2.biWidth,bi2.biHeight,bi2.biPlanes,bi2.biBitCount,bi2.biCompression,bi2.biSizeImage,bi2.biXPelsPerMeter,bi2.biYPelsPerMeter,bi2.biClrUsed,bi2.biClrImportant);
 
-
     // ensure infile is (likely) a 24-bit uncompressed BMP 4.0 //|| bf.bfOffBits != 54
-    if (bf2.bfType != 0x4d42 || bi2.biSize != 40 ||
-            !(bi2.biBitCount == 24 || bi2.biBitCount == 32) || bi2.biCompression != 0)
+    if (bf2.bfType != 0x4d42 || bi2.biSize != 56 || bi2.biBitCount != 32 || bi2.biCompression != 3)
     {
         fclose(outptr);
         fclose(inptr1);
@@ -134,14 +136,13 @@ int main(int argc, char* argv[])
     }
 
     // determine padding for scanlines
-    int in_padding1 =  (4 - (bi1.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
-    int in_padding2 =  (4 - (bi2.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
-
+    int in_padding1 =  (4 - (bi1.biWidth * sizeof(RGBQUADRUPLE)) % 4) % 4;
+    int in_padding2 =  (4 - (bi2.biWidth * sizeof(RGBQUADRUPLE)) % 4) % 4;
 
     // writing to a 3D array
-    RGBTRIPLE image1[bi1.biHeight][bi1.biWidth]; // object image
-    RGBTRIPLE image2[bi2.biHeight][bi2.biWidth]; // objective image
-    RGBQUADRUPLE image3[bi2.biHeight][bi2.biWidth];
+    RGBQUADRUPLE image1[bi1.biHeight][bi1.biWidth]; // object image
+    RGBQUADRUPLE image2[bi2.biHeight][bi2.biWidth]; // objective image
+
 //    RGBTRIPLE image3[bi1.biHeight + 2 * white_border][bi1.biWidth + 2 * white_border]; // output file.
 
     for (int i = abs(bi1.biHeight)-1; i >= 0; i--)
@@ -151,7 +152,7 @@ int main(int argc, char* argv[])
         for (int j = 0; j < bi1.biWidth; j++)
         {
             // read RGB triple from infile
-            fread(&image1[i][j], sizeof(RGBTRIPLE), 1, inptr1);
+            fread(&image1[i][j], sizeof(RGBQUADRUPLE), 1, inptr1);
 
         }
         // skip over padding in infile
@@ -164,26 +165,23 @@ int main(int argc, char* argv[])
         for (int j = 0; j < bi2.biWidth; j++)
         {
             // read RGB triple from infile
-            if (bi2.biBitCount == 24)
-                fread(&image2[i][j], sizeof(RGBTRIPLE), 1, inptr2);
-            else
-                fread(&image3[i][j], sizeof(RGBQUADRUPLE), 1, inptr2);
+            fread(&image2[i][j], sizeof(RGBQUADRUPLE), 1, inptr2);
         }
 
         // skip over padding in infile
         fseek(inptr2, in_padding2, SEEK_CUR);
     }
 
-    // close infile
+    // close infiles as they not longer needed now they are in memory
     fclose(inptr1);
     fclose(inptr2);
 
-    printf("target file:\n");
+    printf("Display target file:\n");
     for (int i = 0; i < abs(bi1.biHeight); i++)
     {
         for (int j = 0; j < bi1.biWidth; j++)
         {
-            if (image1[i][j].rgbtRed == 255 & image1[i][j].rgbtGreen == 255 & image1[i][j].rgbtBlue == 255)
+            if (image1[i][j].rgbtRed > 240 & image1[i][j].rgbtGreen > 240 & image1[i][j].rgbtBlue > 240)
                 printf("X");
             else
                 printf(" ");
@@ -196,7 +194,7 @@ int main(int argc, char* argv[])
     {
         for (int j = 0; j < bi2.biWidth; j++)
         {
-            if (image2[i][j].rgbtRed == 255 & image2[i][j].rgbtGreen == 255 & image2[i][j].rgbtBlue == 255)
+            if (image2[i][j].rgbtRed > 240 & image2[i][j].rgbtGreen > 240 & image2[i][j].rgbtBlue > 240)
                 printf("X");
             else
                 printf(" ");
