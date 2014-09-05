@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
     bi1.biClrUsed = 0;
     bi1.biClrImportant = 0;
     */
-    fread(&bi1, 40, 1, inptr1);
+    fread(&bi1, 56, 1, inptr1);
 
     printf("Bitmap file header:\n");
     printf("Type: \t\t%d \nSize: \t\t%d \nReserved1: \t%d \nReserved2: \t%d \nOffBits: \t%d\n", bf1.bfType, bf1.bfSize, bf1.bfReserved1, bf1.bfReserved2, bf1.bfOffBits);
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
     bi2.biClrUsed = 0;
     bi2.biClrImportant = 0;
     */
-    fread(&bi2, 40, 1, inptr2);
+    fread(&bi2, 56, 1, inptr2);
 
     printf("Bitmap file header:\n");
     printf("Type: \t\t%d \nSize: \t\t%d \nReserved2: \t%d \nReserved2: \t%d \nOffBits: \t%d\n", bf2.bfType, bf2.bfSize, bf2.bfReserved2, bf2.bfReserved2, bf2.bfOffBits);
@@ -142,8 +142,6 @@ int main(int argc, char* argv[])
     // writing to a 3D array
     RGBQUADRUPLE image1[bi1.biHeight][bi1.biWidth]; // object image
     RGBQUADRUPLE image2[bi2.biHeight][bi2.biWidth]; // objective image
-
-//    RGBTRIPLE image3[bi1.biHeight + 2 * white_border][bi1.biWidth + 2 * white_border]; // output file.
 
     for (int i = abs(bi1.biHeight)-1; i >= 0; i--)
   //  for (int i = 0; i < abs(bi1.biHeight); i++)
@@ -186,7 +184,7 @@ int main(int argc, char* argv[])
             else
                 printf(" ");
         }
-        printf("\n");
+        printf("|\n");
     }
 
     printf("object file:\n");
@@ -199,7 +197,7 @@ int main(int argc, char* argv[])
             else
                 printf(" ");
         }
-        printf("\n");
+        printf("|\n");
     }
 
 
@@ -248,17 +246,19 @@ int main(int argc, char* argv[])
     }
 
     printf("offset in y: %d\n", y_loc);
-    printf("offset in x: %d", x_loc);
+    printf("offset in x: %d\n", x_loc);
 
     /** This section build makes the header for the output file.
 
     */
 
+
+
     // construct bitmap headers for the outfile
     BITMAPFILEHEADER out_bf;
     BITMAPINFOHEADER out_bi;
-    out_bf = bf1;
-    out_bi = bi1;
+    out_bf = bf2;
+    out_bi = bi2;
 
     int white_border = 5;
 
@@ -267,16 +267,22 @@ int main(int argc, char* argv[])
     out_bi.biHeight = bi2.biHeight + 2 * white_border;
 
     // determine padding for scanlines
-    int out_padding =  (4 - (out_bi.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
+    int out_padding =  (4 - (out_bi.biWidth * sizeof(RGBQUADRUPLE)) % 4) % 4;
 
-    out_bf.bfSize = 54 + out_bi.biWidth * abs(out_bi.biHeight) * 3 + abs(out_bi.biHeight) *  out_padding;
+    out_bf.bfSize = 14 + 56 + out_bi.biWidth * abs(out_bi.biHeight) * 4 + abs(out_bi.biHeight) * out_padding;
     out_bi.biSizeImage = ((((out_bi.biWidth * out_bi.biBitCount) + 31) & ~31) / 8) * abs(out_bi.biHeight);
 
     // write outfile's BITMAPFILEHEADER
-    fwrite(&out_bf, sizeof(BITMAPFILEHEADER)-2, 1, outptr);
+    fwrite(&out_bf, 14, 1, outptr);
 
     // write outfile's BITMAPINFOHEADER
-    fwrite(&out_bi, sizeof(BITMAPINFOHEADER), 1, outptr);
+    fwrite(&out_bi, 56, 1, outptr);
+
+    printf("Bitmap file header:\n");
+    printf("Type: \t\t%d \nSize: \t\t%d \nReserved2: \t%d \nReserved2: \t%d \nOffBits: \t%d\n", out_bf.bfType, out_bf.bfSize, out_bf.bfReserved2, out_bf.bfReserved2, out_bf.bfOffBits);
+
+    printf("Bitmap info header:\n");
+    printf("Size: \t\t%d\nWidth: \t\t%d\nHeight: \t%d\nPlanes: \t%d\nBitCount: \t%d\nCompression: \t%d\nSizeImage: \t%d\nXPlesPerMeter: \t%d\nYPelsPerMeter: \t%d\nClrUSed: \t%d\nClrImportant \t%d\n",out_bi.biSize,out_bi.biWidth,out_bi.biHeight,out_bi.biPlanes,out_bi.biBitCount,out_bi.biCompression,out_bi.biSizeImage,out_bi.biXPelsPerMeter,out_bi.biYPelsPerMeter,out_bi.biClrUsed,out_bi.biClrImportant);
 
 
     /** The next section writes input file 1 to output file. For this a white
@@ -287,17 +293,21 @@ int main(int argc, char* argv[])
 
     */
 
+    y_loc = 0;
+    x_loc = 0;
 
-
-    RGBTRIPLE white;
+    RGBQUADRUPLE white;
+    white.rgbtAlpha = 0;
     white.rgbtGreen = 255;
     white.rgbtRed   = 255;
     white.rgbtBlue  = 255;
 
-    RGBTRIPLE black;
+
+    RGBQUADRUPLE black;
     black.rgbtGreen = 0;
     black.rgbtRed   = 0;
     black.rgbtBlue  = 0;
+    black.rgbtAlpha = 16;
 
     int input_col_num = bi2.biHeight -1;
 
@@ -308,33 +318,38 @@ int main(int argc, char* argv[])
         {
             for (int j = 0; j < out_bi.biWidth; j++)
             {
-                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+                fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                printf("X");
             }
         }
         else if (i >= (white_border + bi2.biHeight + y_loc))
         {
             for (int j = 0; j < out_bi.biWidth; j++)
             {
-                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+                fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                printf("X");
             }
         }
         else
         {
             for (int j = 0; j < white_border; j++)
             {
-                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+                fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                printf("X");
             }
 
             // write the image to outfile
             for (int j = 0; j < bi2.biWidth; j++)
             {
-                fwrite(&image2[input_col_num][j], sizeof(RGBTRIPLE), 1, outptr);
+                fwrite(&image2[input_col_num][j], sizeof(RGBQUADRUPLE), 1, outptr);
+                printf(" ");
             }
 
             // write the white space right.
             for (int j = 0; j < white_border; j++)
             {
-                fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
+                fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                printf("X");
             }
             input_col_num--;
 
@@ -344,16 +359,12 @@ int main(int argc, char* argv[])
         for (int k = 0; k <out_padding; k++)
             fputc(0x00, outptr);
 
+        printf("|\n");
+
     }
 
-    for (int j = 0; j < 10000; j++)
-    {
-        fwrite(&white, sizeof(RGBTRIPLE), 1, outptr);
-    }
     // close outfile
     fclose(outptr);
-
-
 
     // that's all folks
     return 0;

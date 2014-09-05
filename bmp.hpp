@@ -63,6 +63,10 @@ typedef struct
     LONG   biYPelsPerMeter;
     DWORD  biClrUsed;
     DWORD  biClrImportant;
+    LONG   biMaskRed;
+    LONG   biMaskGreen;
+    LONG   biMaskBlue;
+    LONG   biMaskAlpha;
 }// __attribute__((__packed__))
 BITMAPINFOHEADER;
 
