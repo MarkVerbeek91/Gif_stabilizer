@@ -20,7 +20,6 @@ int main(int argc, char* argv[])
 
     // open input file
     FILE* inptr1 = fopen(infile1, "r");
-    printf("inptr: %d\n", inptr1);
     if (inptr1 == NULL)
     {
         printf("Could not open %s.\n", infile1);
@@ -29,7 +28,6 @@ int main(int argc, char* argv[])
 
     // open input file
     FILE* inptr2 = fopen(infile2, "r");
-    printf("inptr: %d\n", inptr2);
     if (inptr2 == NULL)
     {
         fclose(inptr1);
@@ -57,6 +55,9 @@ int main(int argc, char* argv[])
     bf1.bfOffBits = 5;
     */
     fread(&bf1, 14, 1, inptr1);
+    int * tmp = 0;
+    fread(&tmp, 1, 1, inptr1);
+    fseek(inptr1, -1, SEEK_CUR);
 
     // read infile's BITMAPINFOHEADER
     BITMAPINFOHEADER bi1;
@@ -102,6 +103,9 @@ int main(int argc, char* argv[])
     */
     fread(&bf2, 14, 1, inptr2);
 
+    fread(&tmp, 1, 1, inptr2);
+    fseek(inptr2, -1, SEEK_CUR);
+
     // read infile's BITMAPINFOHEADER
     BITMAPINFOHEADER bi2;
     /*
@@ -140,8 +144,8 @@ int main(int argc, char* argv[])
     int in_padding2 =  (4 - (bi2.biWidth * sizeof(RGBQUADRUPLE)) % 4) % 4;
 
     // writing to a 3D array
-    RGBQUADRUPLE image1[bi1.biHeight][bi1.biWidth]; // object image
-    RGBQUADRUPLE image2[bi2.biHeight][bi2.biWidth]; // objective image
+    RGBQUADRUPLE image1[abs(bi1.biHeight)][bi1.biWidth]; // object image
+    RGBQUADRUPLE image2[abs(bi2.biHeight)][bi2.biWidth]; // objective image
 
     for (int i = abs(bi1.biHeight)-1; i >= 0; i--)
   //  for (int i = 0; i < abs(bi1.biHeight); i++)
@@ -151,11 +155,12 @@ int main(int argc, char* argv[])
         {
             // read RGB triple from infile
             fread(&image1[i][j], sizeof(RGBQUADRUPLE), 1, inptr1);
-
         }
         // skip over padding in infile
         fseek(inptr1, in_padding1, SEEK_CUR);
     }
+
+    int infile_pixels = 0;
 
     for (int i = abs(bi2.biHeight)-1; i >= 0; i--)
     {
@@ -163,12 +168,15 @@ int main(int argc, char* argv[])
         for (int j = 0; j < bi2.biWidth; j++)
         {
             // read RGB triple from infile
-            fread(&image2[i][j], sizeof(RGBQUADRUPLE), 1, inptr2);
+            fread(&image2[i][j], 4, 1, inptr2); //sizeof(RGBQUADRUPLE)
+            infile_pixels++;
         }
 
         // skip over padding in infile
         fseek(inptr2, in_padding2, SEEK_CUR);
     }
+
+    printf("pixels in: %d\n", infile_pixels);
 
     // close infiles as they not longer needed now they are in memory
     fclose(inptr1);
@@ -179,12 +187,12 @@ int main(int argc, char* argv[])
     {
         for (int j = 0; j < bi1.biWidth; j++)
         {
-            if (image1[i][j].rgbtRed > 240 & image1[i][j].rgbtGreen > 240 & image1[i][j].rgbtBlue > 240)
-                printf("X");
-            else
-                printf(" ");
+            if (image1[i][j].rgbtRed > 240 & image1[i][j].rgbtGreen > 240 & image1[i][j].rgbtBlue > 240);
+   //             printf("X");
+   //         else
+   //             printf(" ");
         }
-        printf("|\n");
+   //     printf("|\n");
     }
 
     printf("object file:\n");
@@ -192,12 +200,12 @@ int main(int argc, char* argv[])
     {
         for (int j = 0; j < bi2.biWidth; j++)
         {
-            if (image2[i][j].rgbtRed > 240 & image2[i][j].rgbtGreen > 240 & image2[i][j].rgbtBlue > 240)
-                printf("X");
-            else
-                printf(" ");
+            if (image2[i][j].rgbtRed > 240 & image2[i][j].rgbtGreen > 240 & image2[i][j].rgbtBlue > 240);
+ //               printf("X");
+//            else
+ //               printf(" ");
         }
-        printf("|\n");
+ //       printf("|\n");
     }
 
 
@@ -252,6 +260,8 @@ int main(int argc, char* argv[])
 
     */
 
+    y_loc = 0;
+    x_loc = 0;
 
 
     // construct bitmap headers for the outfile
@@ -260,11 +270,11 @@ int main(int argc, char* argv[])
     out_bf = bf2;
     out_bi = bi2;
 
-    int white_border = 5;
+    int white_border = 0;
 
     // update the header file.
     out_bi.biWidth = bi2.biWidth + 2 * white_border;
-    out_bi.biHeight = bi2.biHeight + 2 * white_border;
+    out_bi.biHeight = abs(bi2.biHeight) + 2 * white_border;
 
     // determine padding for scanlines
     int out_padding =  (4 - (out_bi.biWidth * sizeof(RGBQUADRUPLE)) % 4) % 4;
@@ -293,8 +303,7 @@ int main(int argc, char* argv[])
 
     */
 
-    y_loc = 0;
-    x_loc = 0;
+    int outfile_pixels = 0;
 
     RGBQUADRUPLE white;
     white.rgbtAlpha = 0;
@@ -309,7 +318,7 @@ int main(int argc, char* argv[])
     black.rgbtBlue  = 0;
     black.rgbtAlpha = 16;
 
-    int input_col_num = bi2.biHeight -1;
+    int input_col_num = abs(bi2.biHeight) - 1;
 
     for (int i = abs(out_bi.biHeight)-1; i >= 0; i--)
     {
@@ -319,14 +328,16 @@ int main(int argc, char* argv[])
             for (int j = 0; j < out_bi.biWidth; j++)
             {
                 fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                outfile_pixels++;
                 printf("X");
             }
         }
-        else if (i >= (white_border + bi2.biHeight + y_loc))
+        else if (i >= (white_border + abs(bi2.biHeight) + y_loc))
         {
             for (int j = 0; j < out_bi.biWidth; j++)
             {
                 fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                outfile_pixels++;
                 printf("X");
             }
         }
@@ -335,6 +346,7 @@ int main(int argc, char* argv[])
             for (int j = 0; j < white_border; j++)
             {
                 fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                outfile_pixels++;
                 printf("X");
             }
 
@@ -342,13 +354,15 @@ int main(int argc, char* argv[])
             for (int j = 0; j < bi2.biWidth; j++)
             {
                 fwrite(&image2[input_col_num][j], sizeof(RGBQUADRUPLE), 1, outptr);
-                printf(" ");
+                outfile_pixels++;
+   //           printf(" ");
             }
 
             // write the white space right.
             for (int j = 0; j < white_border; j++)
             {
                 fwrite(&white, sizeof(RGBQUADRUPLE), 1, outptr);
+                outfile_pixels++;
                 printf("X");
             }
             input_col_num--;
@@ -356,16 +370,19 @@ int main(int argc, char* argv[])
         }
 
         // then add it to outfile
-        for (int k = 0; k <out_padding; k++)
-            fputc(0x00, outptr);
+   //     for (int k = 0; k <out_padding; k++)
+     //       fputc(0x00, outptr);
 
-        printf("|\n");
+     //   printf("|\n");
 
     }
+
+    printf("outfile pixels: %d\n",outfile_pixels);
 
     // close outfile
     fclose(outptr);
 
+    printf("Done\n");
     // that's all folks
     return 0;
 }
