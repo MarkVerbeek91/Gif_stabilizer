@@ -139,6 +139,43 @@ int main(int argc, char* argv[])
         return 4;
     }
 
+    FILE* out = fopen("test.bmp","w");
+    if (out == NULL)
+    {
+        fclose(inptr1);
+        fclose(inptr2);
+        fclose(outptr);
+        fclose(out);
+        fprintf(stderr, "Could not create %s.\n", out);
+        return 4;
+    }
+
+
+    /** Een kleine test. simpel copieeren van het bestand */
+
+    // write outfile's BITMAPFILEHEADER
+    fwrite(&bf2, 14, 1, out);
+
+    // write outfile's BITMAPINFOHEADER
+    fwrite(&bi2, 56, 1, out);
+
+    RGBQUADRUPLE temp;
+
+    for (int i = abs(bi2.biHeight)-1; i >= 0; i--)
+  //  for (int i = 0; i < abs(bi1.biHeight); i++)
+    {
+        // iterate over pixels in scanline
+        for (int j = 0; j < bi2.biWidth; j++)
+        {
+            // read RGB triple from infile
+            fread(&temp, sizeof(RGBQUADRUPLE), 1, inptr2);
+            fwrite(&temp, sizeof(RGBQUADRUPLE), 1, inptr2);
+        }
+        // skip over padding in infile
+//        fseek(inptr1, in_padding1, SEEK_CUR);
+    }
+
+
     // determine padding for scanlines
     int in_padding1 =  (4 - (bi1.biWidth * sizeof(RGBQUADRUPLE)) % 4) % 4;
     int in_padding2 =  (4 - (bi2.biWidth * sizeof(RGBQUADRUPLE)) % 4) % 4;
@@ -168,12 +205,19 @@ int main(int argc, char* argv[])
         for (int j = 0; j < bi2.biWidth; j++)
         {
             // read RGB triple from infile
-            fread(&image2[i][j], 4, 1, inptr2); //sizeof(RGBQUADRUPLE)
+        //    fread(&image2[i][j], 4, 1, inptr2); //sizeof(RGBQUADRUPLE)
             infile_pixels++;
+
+        //    for ( int foo = 0; foo < 100; foo++)
+        //        printf(".");
+
         }
 
+       // for ( int foo = 0; foo < 100; foo++)
+       //     printf(".");
+
         // skip over padding in infile
-        fseek(inptr2, in_padding2, SEEK_CUR);
+        //fseek(inptr2, in_padding2, SEEK_CUR);
     }
 
     printf("pixels in: %d\n", infile_pixels);
